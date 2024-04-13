@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34221.43
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pfAPIDownloader", "pfAPIDownloader.csproj", "{821CBA06-336C-465A-BE4F-11E2F1039ADA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{821CBA06-336C-465A-BE4F-11E2F1039ADA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{821CBA06-336C-465A-BE4F-11E2F1039ADA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{821CBA06-336C-465A-BE4F-11E2F1039ADA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{821CBA06-336C-465A-BE4F-11E2F1039ADA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3908A31F-BB0C-4366-9911-640199BA734C}
+	EndGlobalSection
+EndGlobal
