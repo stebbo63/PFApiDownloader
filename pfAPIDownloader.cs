@@ -18,11 +18,12 @@ namespace pfAPIDownloader
 
     public class pfAPIDownloader
     {
-        string apikey       = "12345";
-        string savelocation = "d:\\temp\\pfapi\\";
-        int pastDays        = -2;
-        int nextDays        = 4;
-        bool DoLast7Export  = false;
+        string apikey                 = "12345";
+        string savelocation           = "d:\\temp\\pfapi\\";
+        int pastDays                  = -2;
+        int nextDays                  = 4;
+        bool DoLast7Export            = false;
+        bool ChangesThisPass          = false;
         DateTime lastCheck  = DateTime.MinValue;
         PFApiRepository pfRepo;
         PFUpdates pfUpdateData;
@@ -51,16 +52,25 @@ namespace pfAPIDownloader
             else
                 pfRepo.n_ApiCalls = pfUpdateData.NumApiCalls;
 
-            // Download meetings and results data for the past 7 days using the ExportXXX API calls.
-            // This is useful as sometimes there are barrier trials that come in late and also occasional results updates.
-            // Some clients use this to ensure their databases are kept as up to date as possible
-            if (DoLast7Export)
-                DownloadPastSevenDaysResults();           
-            
             // Run until we get a signal to close.
             while (true)
             {
-                lastCheck = DateTime.Now;
+                // Check Daily Updates.  This should happen once per day on initial load.
+                if (pfUpdateData.DailyCheckTS.Date < DateTime.Now.Date)
+                {
+                    DoDailyUpdates();
+                    pfUpdateData.DailyCheckTS = DateTime.Now;
+                }
+
+                // Check Hourly Updates.
+                if (pfUpdateData.HourlyCheckTS.AddMinutes(60) < DateTime.Now)
+                {
+                    DoHourlyUpdates();
+                    pfUpdateData.HourlyCheckTS = DateTime.Now;
+                }
+
+                // Do meeting Checks every 10 mins
+                lastCheck       = DateTime.Now;
                 for (int i = pastDays; i <= nextDays; i++)
                 {
                     // Get list of meetings for each date
@@ -93,6 +103,8 @@ namespace pfAPIDownloader
                                     DownloadMeetingForm(pfMeet);
                                     DownloadMeetingRatings(pfMeet);
                                 }
+
+                                ChangesThisPass = true;
                             }
                             
                             CheckExit();
@@ -100,10 +112,19 @@ namespace pfAPIDownloader
                     }                    
                 }
 
+                if (ChangesThisPass)
+                {
+                    DownloadGearChanges();
+                    ChangesThisPass = false;
+                }                
+
                 // Check Scratchings
                 CheckScratchings();
 
                 Console.WriteLine($"      Number of api calls made today is {pfRepo.n_ApiCalls}");
+
+                // Save Update Data each 10 mins
+                SaveUpdateData();
 
                 // Wait 10 minutes for next pass.
                 TwiddleThumbsTillNextPass();
@@ -121,6 +142,8 @@ namespace pfAPIDownloader
                     Console.WriteLine($"         Scratchings at {pfScr.TrackName} on {pfScr.MeetingDate} have changed.");
 
                     // You will likely want to do something here
+
+                    ChangesThisPass = true;
                 }
             }
         }
@@ -173,6 +196,36 @@ namespace pfAPIDownloader
             Thread.Sleep(1000);
             return true;
         }
+        private bool DownloadRatingsViaSouthCoastCall()
+        {
+            Console.WriteLine($"   Downloading ratings vai GetSouthCoastRatings call");
+            List<string> pfRatings = pfRepo.GetSouthCoastData();
+
+            if (pfRatings != null && RatingsAreNewOrUpdated(pfRatings, "all", DateTime.Now.Date))
+            {
+                Console.WriteLine($"     Ratings have changed");
+
+                // You will likely want to action something here.
+            }
+
+            Thread.Sleep(1000);
+            return true;
+        }
+        private bool DownloadGearChanges()
+        {
+            Console.WriteLine($"   Downloading GearChanages");
+            List<string> pfGears = pfRepo.GetGearChanges();
+
+            if (pfGears != null && RatingsAreNewOrUpdated(pfGears, "all", DateTime.Now.Date))
+            {
+                Console.WriteLine($"     Gear changes has changed");
+
+                // You will likely want to action something here.
+            }
+
+            Thread.Sleep(1000);
+            return true;
+        }
         private bool DownloadPastSevenDaysResults()
         {
             Console.WriteLine($"{DateTime.Now.ToString("HH:mm")} Downloading last 7 days worth of fields / results");
@@ -184,6 +237,21 @@ namespace pfAPIDownloader
             // You will likely want to do something with this data here
 
             return true;
+        }
+        private void DoDailyUpdates()
+        {
+            Console.WriteLine($"{DateTime.Now.ToString("HH:mm")} Performing Daily Updates");
+
+            // Download meetings and results data for the past 7 days using the ExportXXX API calls.
+            // This is useful as sometimes there are barrier trials that come in late and also occasional results updates.
+            // Some clients use this to ensure their databases are kept as up to date as possible
+            if (DoLast7Export)
+                DownloadPastSevenDaysResults();
+
+        }
+        private void DoHourlyUpdates()
+        {
+            Console.WriteLine($"{DateTime.Now.ToString("HH:mm")} Performing Hourly Updates");
         }
         private bool MeetingIsNewOrUpdated(PFApiMeet pfMeet)
         {

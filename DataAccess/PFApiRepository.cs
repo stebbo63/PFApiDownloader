@@ -23,11 +23,13 @@ namespace pfAPIDownloader.DataAccess
         string m_GetFormJSON    = "{0}/formdataservice/GetForm/{1}/{2}/{3}{4}";
         string m_GetMeetingList = "{0}/formdataservice/GetMeetingListExt/{1}{2}";
         string m_GetResults     = "{0}/formdataservice/GetResults/{1}/{2}{3}";
+        string m_GetGearChanges = "{0}/formdataservice/GetGearChanges{1}";
         string m_ExportMeetings = "{0}/formdataservice/ExportMeetings/{1}/true{2}";   // true includes barrier trials. send false for no barrier trials
         string m_ExportRaces    = "{0}/formdataservice/ExportRaces/{1}/true{2}";      // true includes barrier trials. send false for no barrier trials
         string m_ExportFields   = "{0}/formdataservice/ExportFields/{1}/true{2}";     // true includes barrier trials. send false for no barrier trials
         string m_GetScratchings = "{0}/ScratchingsService/GetAllScratchings{1}";
         string m_GetRatings     = "{0}/RatingsService/GetRatingsText/{1}/{2}{3}";
+        string m_GetSouthCoast  = "{0}/ratingsservice/GetSouthcoastData/premium/false/all{1}";
 
         string m_apikey         = string.Empty;
         string m_DumpDir        = string.Empty;
@@ -140,6 +142,54 @@ namespace pfAPIDownloader.DataAccess
                 if (!string.IsNullOrEmpty(ratings))
                 {
                     return ratings.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+            return null;
+        }
+        public List<string>? GetSouthCoastData()
+        {
+            try
+            {
+                string url     = String.Format(m_GetSouthCoast, m_apibase, m_apikey);
+                string ratings = CallApi(url);
+
+                if (m_DumpDir != null && Directory.Exists(m_DumpDir))
+                {
+                    File.WriteAllText($"{m_DumpDir}getsouthcoast.txt", ratings);
+                }
+
+                if (!string.IsNullOrEmpty(ratings))
+                {
+                    return ratings.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+            return null;
+        }
+        public List<string>? GetGearChanges()
+        {
+            try
+            {
+                string url   = String.Format(m_GetGearChanges, m_apibase, m_apikey);
+                string gears = CallApi(url);
+
+                if (m_DumpDir != null && Directory.Exists(m_DumpDir))
+                {
+                    File.WriteAllText($"{m_DumpDir}getgearchanges.txt", gears);
+                }
+
+                if (!string.IsNullOrEmpty(gears))
+                {
+                    return gears.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
                 }
                 return null;
             }

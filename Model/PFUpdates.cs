@@ -10,6 +10,8 @@ namespace pfAPIDownloader.Model
     {
         public int NumApiCalls        = 0;
         public DateTime LastCalled    = DateTime.MinValue;
+        public DateTime DailyCheckTS  = DateTime.MinValue;
+        public DateTime HourlyCheckTS = DateTime.MinValue;
 
         public Dictionary<int, DateTime> MeetingUpdated    = new Dictionary<int, DateTime>();
         public Dictionary<int, string> RaceHashes          = new Dictionary<int, string>();
