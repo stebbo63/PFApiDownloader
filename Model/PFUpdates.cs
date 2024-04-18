@@ -18,5 +18,15 @@ namespace pfAPIDownloader.Model
         public Dictionary<int, string> ResultHashes        = new Dictionary<int, string>();
         public Dictionary<string, string> RatingsHashes    = new Dictionary<string, string>();
         public Dictionary<string, string> ScratchUpdates   = new Dictionary<string, string>();
+
+        // keep track of when meetings and races are added so we can clear old data from memory
+        public Dictionary<int, DateTime> MeetingAdded = new Dictionary<int, DateTime>();
+        public Dictionary<int, DateTime> RaceAdded    = new Dictionary<int, DateTime>();
+
+        public void ClearHashes()
+        {
+            RatingsHashes.Clear();
+            ScratchUpdates.Clear();
+        }
     }
 }

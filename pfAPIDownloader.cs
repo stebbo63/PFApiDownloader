@@ -22,8 +22,8 @@ namespace pfAPIDownloader
         string savelocation           = "d:\\temp\\pfapi\\";
         int pastDays                  = -2;
         int nextDays                  = 4;
-        bool DoLast7Export            = false;
-        bool ChangesThisPass          = false;
+        bool doLast7Export            = false;
+        bool changesThisPass          = false;
         DateTime lastCheck  = DateTime.MinValue;
         PFApiRepository pfRepo;
         PFUpdates pfUpdateData;
@@ -48,6 +48,10 @@ namespace pfAPIDownloader
             {
                 pfRepo.n_ApiCalls       = 0;
                 pfUpdateData.LastCalled = DateTime.Now;
+
+                // clear out old meetings and hash data.
+                ClearOldMeetings();
+                pfUpdateData.ClearHashes();
             }
             else
                 pfRepo.n_ApiCalls = pfUpdateData.NumApiCalls;
@@ -104,7 +108,7 @@ namespace pfAPIDownloader
                                     DownloadMeetingRatings(pfMeet);
                                 }
 
-                                ChangesThisPass = true;
+                                changesThisPass = true;
                             }
                             
                             CheckExit();
@@ -112,10 +116,10 @@ namespace pfAPIDownloader
                     }                    
                 }
 
-                if (ChangesThisPass)
+                if (changesThisPass)
                 {
                     DownloadGearChanges();
-                    ChangesThisPass = false;
+                    changesThisPass = false;
                 }                
 
                 // Check Scratchings
@@ -143,7 +147,7 @@ namespace pfAPIDownloader
 
                     // You will likely want to do something here
 
-                    ChangesThisPass = true;
+                    changesThisPass = true;
                 }
             }
         }
@@ -245,7 +249,7 @@ namespace pfAPIDownloader
             // Download meetings and results data for the past 7 days using the ExportXXX API calls.
             // This is useful as sometimes there are barrier trials that come in late and also occasional results updates.
             // Some clients use this to ensure their databases are kept as up to date as possible
-            if (DoLast7Export)
+            if (doLast7Export)
                 DownloadPastSevenDaysResults();
 
         }
@@ -268,6 +272,7 @@ namespace pfAPIDownloader
             {
                 // meeting is new
                 pfUpdateData.MeetingUpdated.Add(pfMeet.MeetingId, pfMeet.LastUpdate);
+                pfUpdateData.MeetingAdded.Add(pfMeet.MeetingId, DateTime.Now.Date);
                 return true;
             }
 
@@ -319,6 +324,7 @@ namespace pfAPIDownloader
             {
                 // race is new
                 pfUpdateData.RaceHashes.Add(pfRace.RaceDetail.RaceId, hash);
+                pfUpdateData.RaceAdded.Add(pfRace.RaceDetail.RaceId, DateTime.Now.Date);
                 return true;
             }
             // If neither of the above, then race is not changed.
@@ -339,6 +345,8 @@ namespace pfAPIDownloader
             else
             {
                 pfUpdateData.ResultHashes.Add(pfResults.MeetingId, hash);
+                if (!pfUpdateData.MeetingAdded.ContainsKey(pfResults.MeetingId))
+                    pfUpdateData.MeetingAdded.Add(pfResults.MeetingId, DateTime.Now.Date);
                 return true;
             }
             // If neither of the above, then race is not changed.
@@ -423,6 +431,27 @@ namespace pfAPIDownloader
                 byte[] hashBytes = md5.ComputeHash(inputBytes);
 
                 return Convert.ToHexString(hashBytes);
+            }
+        }
+        private void ClearOldMeetings()
+        {
+            // prevent the meeting and result update tables from growing too large with old meetings.
+
+            // once per day, as we exit, clear old meetings & results from the meetings hashes
+            List<int> meetingsToRemove = pfUpdateData.MeetingAdded.Where(a => a.Value < DateTime.Now.AddDays(-10).Date).Select(a => a.Key).ToList();
+            foreach (var mid in meetingsToRemove)
+            {
+                pfUpdateData.MeetingUpdated.Remove(mid);
+                pfUpdateData.ResultHashes.Remove(mid);
+                pfUpdateData.MeetingAdded.Remove(mid);
+            }
+
+            // once per day, as we exit, clear old races from the race hashes.
+            List<int> racesToRemove = pfUpdateData.RaceAdded.Where(a => a.Value < DateTime.Now.AddDays(-10).Date).Select(a => a.Key).ToList();
+            foreach (var mid in racesToRemove)
+            {
+                pfUpdateData.RaceHashes.Remove(mid);
+                pfUpdateData.RaceAdded.Remove(mid);
             }
         }
     }
