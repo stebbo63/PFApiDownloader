@@ -217,7 +217,7 @@ namespace pfAPIDownloader
         }
         private bool DownloadGearChanges()
         {
-            Console.WriteLine($"   Downloading GearChanages");
+            Console.WriteLine($"   Downloading GearChanges");
             List<string> pfGears = pfRepo.GetGearChanges();
 
             if (pfGears != null && RatingsAreNewOrUpdated(pfGears, "all", DateTime.Now.Date))
